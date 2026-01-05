@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Results</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Room header -->
+        <div class="room-header">
+            <h1>Game Results</h1>
+            <p>Room: {{ room_code }}</p>
+        </div>
+
+        <!-- Leaderboard section -->
+        <div id="leaderboard-section" class="section">
+            <h2>Final Standings</h2>
+            <table id="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Player</th>
+                        <th>Score</th>
+                        <th>Time (s)</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+        </div>
+
+        <div class="button-section">
+            <a href="/" class="primary-btn"
+                style="text-decoration: none; display: inline-block; text-align: center;">Back to Home</a>
+        </div>
+
+        <!-- Error message display -->
+        <div id="error-message" class="error-message"></div>
+    </div>
+
+    <!-- Socket.IO client library -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const socket = io('http://localhost:5000');
+        const roomCode = "{{ room_code }}";
+        const leaderboardBody = document.getElementById('leaderboard-body');
+        const errorMessage = document.getElementById('error-message');
+
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        socket.on('connect', () => {
+            console.log('Connected to server, requesting leaderboard');
+            socket.emit('request_leaderboard', { room_code: roomCode });
+        });
+
+        socket.on('leaderboard_update', (data) => {
+            console.log('Leaderboard received:', data);
+            leaderboardBody.innerHTML = '';
+
+            if (!data.leaderboard || data.leaderboard.length === 0) {
+                leaderboardBody.innerHTML = '<tr><td colspan="5">No results available</td></tr>';
+                return;
+            }
+
+            // Client-side username for highlighting
+            const myUsername = sessionStorage.getItem('username');
+
+            data.leaderboard.forEach((entry, index) => {
+                const tr = document.createElement('tr');
+
+                // Add special class for top 3
+                if (index === 0) tr.classList.add('rank-1');
+                else if (index === 1) tr.classList.add('rank-2');
+                else if (index === 2) tr.classList.add('rank-3');
+
+                // Rank
+                const rankTd = document.createElement('td');
+                rankTd.textContent = index + 1;
+                tr.appendChild(rankTd);
+
+                // Player name
+                const nameTd = document.createElement('td');
+                nameTd.textContent = entry.username;
+                if (entry.username === myUsername) {
+                    nameTd.textContent += ' (You)';
+                    nameTd.style.fontWeight = 'bold';
+                }
+                tr.appendChild(nameTd);
+
+                // Score
+                const scoreTd = document.createElement('td');
+                scoreTd.textContent = entry.score;
+                tr.appendChild(scoreTd);
+
+                // Time taken
+                const timeTd = document.createElement('td');
+                timeTd.textContent = entry.time_taken.toFixed(2);
+                tr.appendChild(timeTd);
+
+                // Status
+                const statusTd = document.createElement('td');
+                if (entry.is_correct) {
+                    statusTd.textContent = '✓ Correct';
+                    statusTd.className = 'status-correct';
+                } else {
+                    statusTd.textContent = '✗ Wrong';
+                    statusTd.className = 'status-wrong';
+                }
+                tr.appendChild(statusTd);
+
+                leaderboardBody.appendChild(tr);
+            });
+        });
+
+        socket.on('error', (data) => {
+            showError(data.message);
+        });
+    </script>
+</body>
+
+</html>

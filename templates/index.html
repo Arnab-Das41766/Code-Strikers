@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSA Quiz - Multiplayer</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>DSA Quiz</h1>
+        <p class="subtitle">Compete with friends in real-time!</p>
+
+        <!-- Username input section -->
+        <div class="input-section">
+            <label for="username">Enter your username:</label>
+            <input type="text" id="username" placeholder="Username" maxlength="20" required>
+        </div>
+
+        <!-- Quiz duration selection (for room creators) -->
+        <div class="input-section" id="duration-section">
+            <label for="duration">Quiz Duration (seconds):</label>
+            <input type="number" id="duration" value="60" min="30" max="300" required>
+        </div>
+
+        <!-- Create room section -->
+        <div class="button-section">
+            <button id="create-room-btn" class="primary-btn">Create Room</button>
+        </div>
+
+        <!-- Join room section -->
+        <div class="divider">OR</div>
+
+        <div class="input-section">
+            <label for="room-code">Enter room code:</label>
+            <input type="text" id="room-code" placeholder="6-digit code" maxlength="6" pattern="[0-9]{6}">
+        </div>
+
+        <div class="button-section">
+            <button id="join-room-btn" class="secondary-btn">Join Room</button>
+        </div>
+
+        <!-- Error message display -->
+        <div id="error-message" class="error-message"></div>
+    </div>
+
+    <!-- Socket.IO client library -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+    <script>
+        // Check if Socket.IO is loaded
+        if (typeof io === 'undefined') {
+            alert('Socket.IO client library failed to load. Please check your internet connection or these settings.');
+            document.getElementById('error-message').textContent = 'Error: Socket.IO library execution failed.';
+            document.getElementById('error-message').style.display = 'block';
+        }
+
+        // Initialize socket connection
+        // Connect explicitly to localhost:5000 where the Flask server is running
+        const socket = io('http://localhost:5000');
+
+        // Get DOM elements
+        const usernameInput = document.getElementById('username');
+        const durationInput = document.getElementById('duration');
+        const roomCodeInput = document.getElementById('room-code');
+        const createRoomBtn = document.getElementById('create-room-btn');
+        const joinRoomBtn = document.getElementById('join-room-btn');
+        const errorMessage = document.getElementById('error-message');
+
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // Connection error handling
+        socket.on('connect_error', (err) => {
+            console.error('Connection failed:', err);
+            showError('Failed to connect to server. Make sure app.py is running on port 5000.');
+            createRoomBtn.disabled = false;
+            createRoomBtn.textContent = 'Create Room';
+            joinRoomBtn.disabled = false;
+            joinRoomBtn.textContent = 'Join Room';
+        });
+
+        // Validate username
+        function validateUsername() {
+            const username = usernameInput.value.trim();
+            if (!username) {
+                showError('Please enter a username');
+                return null;
+            }
+            if (username.length < 2) {
+                showError('Username must be at least 2 characters');
+                return null;
+            }
+            return username;
+        }
+
+        // Create room handler
+        createRoomBtn.addEventListener('click', () => {
+            console.log('Create room clicked');
+            const username = validateUsername();
+            if (!username) return;
+
+            const duration = parseInt(durationInput.value);
+            if (duration < 30 || duration > 300) {
+                showError('Duration must be between 30 and 300 seconds');
+                return;
+            }
+
+            // Disable button to prevent double-click
+            createRoomBtn.disabled = true;
+            createRoomBtn.textContent = 'Creating...';
+
+            if (!socket.connected) {
+                showError('Not connected to server. Please wait...');
+                createRoomBtn.disabled = false;
+                createRoomBtn.textContent = 'Create Room';
+                return;
+            }
+
+            // Emit create room event
+            console.log('Emitting create_room', { username, duration });
+            socket.emit('create_room', {
+                username: username,
+                duration: duration
+            });
+        });
+
+        // Join room handler
+        joinRoomBtn.addEventListener('click', () => {
+            const username = validateUsername();
+            if (!username) return;
+
+            const roomCode = roomCodeInput.value.trim();
+            if (!roomCode || roomCode.length !== 6 || !/^\d{6}$/.test(roomCode)) {
+                showError('Please enter a valid 6-digit room code');
+                return;
+            }
+
+            // Disable button to prevent double-click
+            joinRoomBtn.disabled = true;
+            joinRoomBtn.textContent = 'Joining...';
+
+            if (!socket.connected) {
+                showError('Not connected to server. Please wait...');
+                joinRoomBtn.disabled = false;
+                joinRoomBtn.textContent = 'Join Room';
+                return;
+            }
+
+            // Emit join room event
+            socket.emit('join_room', {
+                username: username,
+                room_code: roomCode
+            });
+        });
+
+        // Handle room created successfully
+        socket.on('room_created', (data) => {
+            console.log('Room created:', data);
+            // Store username and room info in sessionStorage
+            sessionStorage.setItem('username', data.username);
+            sessionStorage.setItem('room_code', data.room_code);
+            sessionStorage.setItem('is_host', data.is_host);
+
+            // Redirect to room page
+            window.location.href = `/room/${data.room_code}`;
+        });
+
+        // Handle room joined successfully
+        socket.on('room_joined', (data) => {
+            // Store username and room info in sessionStorage
+            sessionStorage.setItem('username', data.username);
+            sessionStorage.setItem('room_code', data.room_code);
+            sessionStorage.setItem('is_host', data.is_host);
+
+            // Redirect to room page
+            window.location.href = `/room/${data.room_code}`;
+        });
+
+        // Handle join errors
+        socket.on('join_error', (data) => {
+            showError(data.message);
+            joinRoomBtn.disabled = false;
+            joinRoomBtn.textContent = 'Join Room';
+        });
+
+        // Handle general errors
+        socket.on('error', (data) => {
+            showError(data.message);
+            createRoomBtn.disabled = false;
+            createRoomBtn.textContent = 'Create Room';
+            joinRoomBtn.disabled = false;
+            joinRoomBtn.textContent = 'Join Room';
+        });
+
+        // Enable room code input only for numeric values
+        roomCodeInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Room</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Room header -->
+        <div class="room-header">
+            <h1>Room: <span id="room-code-display">{{ room_code }}</span></h1>
+            <p>Welcome, <span id="username-display"></span></p>
+        </div>
+
+        <!-- Waiting area (before quiz starts) -->
+        <div id="waiting-area" class="section">
+            <h2>Players in Room</h2>
+            <ul id="player-list"></ul>
+
+            <div id="host-controls" style="display: none;">
+                <button id="start-quiz-btn" class="primary-btn">Start Quiz</button>
+            </div>
+
+            <p class="info-text">Waiting for host to start the quiz...</p>
+        </div>
+
+        <!-- Quiz area (during quiz) -->
+        <div id="quiz-area" class="section" style="display: none;">
+            <!-- Timer display -->
+            <div class="timer-section">
+                <h3>Time Remaining</h3>
+                <div id="timer-display" class="timer">--</div>
+            </div>
+
+            <!-- Question display -->
+            <div class="question-section">
+                <h3>Question</h3>
+                <p id="question-text"></p>
+            </div>
+
+            <!-- Answer section -->
+            <div class="answer-section">
+                <!-- For MCQ questions -->
+                <div id="mcq-options" style="display: none;"></div>
+
+                <!-- For text questions -->
+                <div id="text-answer" style="display: none;">
+                    <input type="text" id="answer-input" placeholder="Enter your answer">
+                </div>
+
+                <button id="submit-btn" class="primary-btn">Submit Answer</button>
+                <div id="submission-status" class="submission-status"></div>
+            </div>
+        </div>
+
+        <!-- Leaderboard section -->
+        <div id="leaderboard-section" class="section" style="display: none;">
+            <h2>Leaderboard</h2>
+            <table id="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Player</th>
+                        <th>Score</th>
+                        <th>Time (s)</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Error message display -->
+        <div id="error-message" class="error-message"></div>
+    </div>
+
+    <!-- Socket.IO client library -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="/static/room.js"></script>
+</body>
+
+</html>
