@@ -11,41 +11,49 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
-    <div class="container">
+    <div class="container" style="max-width: 800px;">
         <h1>DSA Quiz</h1>
         <p class="subtitle">Compete with friends in real-time!</p>
 
-        <!-- Username input section -->
-        <div class="input-section">
-            <label for="username">Enter your username:</label>
-            <input type="text" id="username" placeholder="Username" maxlength="20" required>
+        <!-- Global Username Input -->
+        <div class="input-group">
+            <i class="fas fa-user"></i>
+            <input type="text" id="username" placeholder="Enter your username" maxlength="20" required>
         </div>
 
-        <!-- Quiz duration selection (for room creators) -->
-        <div class="input-section" id="duration-section">
-            <label for="duration">Quiz Duration (seconds):</label>
-            <input type="number" id="duration" value="60" min="30" max="300" required>
-        </div>
+        <div class="card-grid">
+            <!-- Host Card -->
+            <div class="action-card">
+                <h3><i class="fas fa-crown"></i> Host Game</h3>
 
-        <!-- Create room section -->
-        <div class="button-section">
-            <button id="create-room-btn" class="primary-btn">Create Room</button>
-        </div>
+                <div class="input-group">
+                    <i class="fas fa-hourglass-half"></i>
+                    <input type="number" id="duration" value="60" min="30" max="300" placeholder="Duration (sec)">
+                </div>
 
-        <!-- Join room section -->
-        <div class="divider">OR</div>
+                <button id="create-room-btn" class="primary-btn">
+                    Create Room
+                </button>
+            </div>
 
-        <div class="input-section">
-            <label for="room-code">Enter room code:</label>
-            <input type="text" id="room-code" placeholder="6-digit code" maxlength="6" pattern="[0-9]{6}">
-        </div>
+            <!-- Join Card -->
+            <div class="action-card">
+                <h3><i class="fas fa-rocket"></i> Join Game</h3>
 
-        <div class="button-section">
-            <button id="join-room-btn" class="secondary-btn">Join Room</button>
+                <div class="input-group">
+                    <i class="fas fa-key"></i>
+                    <input type="text" id="room-code" placeholder="Room Code" maxlength="6" pattern="[0-9]{6}">
+                </div>
+
+                <button id="join-room-btn" class="secondary-btn">
+                    Join Room
+                </button>
+            </div>
         </div>
 
         <!-- Error message display -->
